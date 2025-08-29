@@ -1,0 +1,51 @@
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #2c2c2c;
+  color: white;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  height: calc(100vh - 60px);
+}
+
+.center-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+/* Add this to your existing App.css file */
+
+.simulation-button {
+    position: absolute;
+    top: 120px; /* Position it below the existing connect button */
+    left: 10px;
+    z-index: 1000;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+    background-color: #007bff; /* A nice blue */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: background-color 0.3s ease;
+}
+
+.simulation-button:hover {
+    background-color: #0056b3;
+}
+
+.simulation-button.simulating {
+    background-color: #dc3545; /* Red when active */
+}
+
+.simulation-button.simulating:hover {
+    background-color: #c82333;
+}

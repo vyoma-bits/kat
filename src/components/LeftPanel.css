@@ -1,0 +1,186 @@
+.left-panel {
+  width: 320px;
+  background: #2a2a2a;
+  border-right: 1px solid #555;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+}
+
+.attitude-indicator {
+  height: 280px;
+  background: #1a1a1a;
+  border: 2px solid #555;
+  border-radius: 8px;
+  position: relative;
+  margin-bottom: 15px;
+  overflow: hidden;
+}
+
+.horizon {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.sky {
+  flex: 1;
+  background: linear-gradient(to bottom, #87CEEB, #4682B4);
+}
+
+.ground {
+  flex: 1;
+  background: linear-gradient(to bottom, #8B4513, #654321);
+}
+
+.aircraft-symbol {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  z-index: 10;
+}
+
+.attitude-scale {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 10;
+}
+
+.scale-mark {
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  transition: transform 0.1s ease-out;
+}
+
+.status-section {
+  margin-bottom: 20px;
+}
+
+.status-item {
+  margin-bottom: 10px;
+}
+
+.disarmed {
+  background: #f44336;
+  color: white;
+  padding: 8px;
+  text-align: center;
+  font-weight: bold;
+  border-radius: 4px;
+}
+
+.altitude-info {
+  background: #333;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.alt-value {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.speed-info {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  color: #ccc;
+}
+
+.battery-info {
+  background: #333;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.gps-info {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: #ccc;
+}
+
+.gps-status {
+  color: #f44336;
+}
+
+.gps-status.gps-fix {
+  color: #4caf50;
+}
+.action-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-top: auto;
+}
+
+.action-btn {
+  background: #444;
+  border: 1px solid #666;
+  color: white;
+  padding: 8px;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+.action-btn:hover {
+  background: #555;
+}
+.altitude-indicator {
+  position: relative;
+  height: 100px;
+  overflow: hidden;
+  background: #222;
+  border: 1px solid #555;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.altitude-scale {
+  position: absolute;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease-out;
+}
+
+.altitude-tick {
+  height: 20px;
+  font-size: 10px;
+  color: #aaa;
+}
+
+.altitude-marker {
+  position: absolute;
+  top: 40px;
+  left: 60px;
+  font-size: 12px;
+  background: #4caf50;
+  color: white;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-weight: bold;
+  z-index: 2;
+}
+.horizon {
+  transition: transform 0.3s ease-out;
+}

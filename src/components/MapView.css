@@ -1,0 +1,339 @@
+/* --- Base & Map --- */
+.map-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #1a1a1a;
+}
+
+.leaflet-map {
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+}
+
+.leaflet-container {
+  background: #1a1a1a;
+}
+
+/* --- Connect Button --- */
+.connect-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.connect-button.connected {
+  background-color: #ef4444; /* Red for disconnect */
+  color: white;
+}
+
+.connect-button.disconnected, .connect-button.error {
+  background-color: #22c55e; /* Green for connect */
+  color: white;
+}
+
+.connect-button:hover {
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+
+
+/* --- Side Navigation --- */
+.side-nav {
+  position: fixed;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nav-button {
+  width: 80px;
+  height: 50px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(5px);
+}
+
+.nav-button:hover {
+  background: rgba(0, 0, 0, 0.8);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.nav-symbol {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.nav-text {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.nav-button.armed .nav-text { color: #ef4444; }
+.nav-button.disarmed .nav-text { color: #22c55e; }
+.nav-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(50, 50, 50, 0.6);
+}
+
+
+/* --- Attitude Panel --- */
+.attitude-panel {
+  position: absolute;
+  top: 70px; /* Position below connect button */
+  right: 20px;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  width: 200px;
+}
+
+.attitude-indicator {
+  width: 120px;
+  height: 120px;
+  position: relative;
+  margin: 0 auto 15px auto;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: #111;
+}
+
+/* --- Attitude Guts (Roll, Pitch, Yaw) --- */
+.horizon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 240px; /* Wider to avoid edges showing during roll */
+  height: 240px;
+  margin-top: -120px;
+  margin-left: -120px;
+  transition: transform 0.1s linear;
+  transform-origin: center center;
+}
+
+.sky {
+  height: 50%;
+  background: linear-gradient(to bottom, #87CEEB, #4682B4);
+}
+
+.ground {
+  height: 50%;
+  background: linear-gradient(to top, #8B4513, #A0522D);
+}
+
+.horizon-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: white;
+  transform: translateY(-1px);
+}
+
+.aircraft-symbol {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+}
+
+.aircraft-wing-left, .aircraft-wing-right {
+  width: 35px;
+  height: 4px;
+  background: #ffaa00;
+  border: 1px solid #333;
+}
+.aircraft-wing-left { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
+.aircraft-wing-right { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+
+.aircraft-center {
+  width: 8px;
+  height: 8px;
+  background: #ffaa00;
+  border-radius: 50%;
+  border: 1px solid #333;
+}
+
+/* --- Compass for Yaw --- */
+.compass-rose {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  transition: transform 0.1s linear;
+  z-index: 5;
+}
+
+.heading-marker {
+  position: absolute;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  text-shadow: 1px 1px 2px black;
+}
+.heading-marker.north { top: 2px; left: 50%; transform: translateX(-50%); }
+.heading-marker.east { top: 50%; right: 5px; transform: translateY(-50%); }
+.heading-marker.south { bottom: 2px; left: 50%; transform: translateX(-50%); }
+.heading-marker.west { top: 50%; left: 5px; transform: translateY(-50%); }
+
+.heading-display {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #00ff00;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  font-family: monospace;
+  z-index: 30;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* --- Attitude Text Values --- */
+.attitude-values {
+  display: flex;
+  justify-content: space-around;
+  gap: 8px;
+}
+
+.attitude-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.attitude-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 600;
+}
+
+.attitude-value {
+  font-size: 14px;
+  font-weight: bold;
+  font-family: monospace;
+  color: #00ff00;
+}
+
+/* --- Bottom Telemetry Bar --- */
+.telemetry-bar {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 8px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.telemetry-data {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+.telemetry-data .value {
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.value.purple { color: #a855f7; }
+.value.orange { color: #f97316; }
+.value.green { color: #22c55e; }
+.value.cyan { color: #06b6d4; }
+.value.armed-status { color: #ef4444; }
+.value.disarmed-status { color: #22c55e; }
+.value.connected { color: #22c55e; }
+.value.disconnected, .value.error { color: #ef4444; }
+
+/* --- ADD THESE STYLES TO THE END OF YOUR CSS FILE --- */
+
+.compass-rose {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  transition: transform 0.1s linear;
+  z-index: 5; /* Places it behind the aircraft symbol */
+}
+
+.heading-marker {
+  position: absolute;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  text-shadow: 1px 1px 2px black;
+}
+.heading-marker.north { top: 2px; left: 50%; transform: translateX(-50%); }
+.heading-marker.east { top: 50%; right: 5px; transform: translateY(-50%); }
+.heading-marker.south { bottom: 2px; left: 50%; transform: translateX(-50%); }
+.heading-marker.west { top: 50%; left: 5px; transform: translateY(-50%); }
+
+.heading-display {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #00ff00;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  font-family: monospace;
+  z-index: 30;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.aircraft-symbol {
+  /* This ensures the orange aircraft symbol is always on top */
+  z-index: 20;
+}
