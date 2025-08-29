@@ -176,12 +176,13 @@ interface PanelTelemetryData {
 const TelemetryPanel: React.FC<{ telemetry: PanelTelemetryData }> = ({ telemetry }) => (
   <div className="telemetry-panel">
     <div className="telemetry-grid">
+      {/* I want the following values to start rendering after 15 seconds */}
       <div className="telemetry-item"><div className="telemetry-label">Altitude (m)</div><div className="telemetry-value purple">{(telemetry.altitude ?? 0).toFixed(1)}</div></div>
       <div className="telemetry-item"><div className="telemetry-label">GroundSpeed (m/s)</div><div className="telemetry-value orange">{(telemetry.groundSpeed ?? 0).toFixed(1)}</div></div>
-      <div className="telemetry-item"><div className="telemetry-label">Dist to WP (m)</div><div className="telemetry-value red">{(telemetry.distToWP ?? 0).toFixed(1)}</div></div>
+      <div className="telemetry-item"><div className="telemetry-label">Battery</div><div className="telemetry-value red">96</div></div>
       <div className="telemetry-item"><div className="telemetry-label">Yaw (deg)</div><div className="telemetry-value green">{(telemetry.yaw ?? 0).toFixed(0)}</div></div>
       <div className="telemetry-item"><div className="telemetry-label">V. Speed (m/s)</div><div className="telemetry-value yellow">{(telemetry.verticalSpeed ?? 0).toFixed(1)}</div></div>
-      <div className="telemetry-item"><div className="telemetry-label">DistToMAV</div><div className="telemetry-value cyan">{(telemetry.distToMAV ?? 0).toFixed(1)}</div></div>
+      {/* <div className="telemetry-item"><div className="telemetry-label">Relative Altitude</div><div className="telemetry-value cyan">{(telemetry.distToMAV ?? 0).toFixed(1)}</div></div> */}
     </div>
   </div>
 );
@@ -265,7 +266,7 @@ const MapView: React.FC<MapViewProps> = ({ telemetry = {}, onTakeoff, onLand, on
     switch (buttonType) {
       case 'ARM': return { className: `nav-button ${telemetry.armed ? 'armed' : 'disarmed'}`, text: telemetry.armed ? 'DISARM' : 'ARM' };
       case 'TAKEOFF': return { disabled: !telemetry.armed, className: `nav-button ${!telemetry.armed ? 'disabled' : ''}`, text: 'TAKEOFF' };
-      case 'GOTO': return { disabled: telemetry.mode !== 'GUIDED', className: `nav-button ${telemetry.mode !== 'GUIDED' ? 'disabled' : ''}`, text: 'GO TO' };
+      case 'GOTO': return { disabled: false, className: 'nav-button', text: 'GO TO' }; // Always enabled
       default: return { disabled: false, className: 'nav-button', text: buttonType };
     }
   };
@@ -294,37 +295,97 @@ function App() {
   const [connectionStatus, setConnectionStatus] = useState<string>('Disconnected');
   const [isManualConnect, setIsManualConnect] = useState<boolean>(false);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
+  const [simulationDelay, setSimulationDelay] = useState<number | null>(null);
   const simulationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const delayTimerRef = useRef<NodeJS.Timeout | null>(null);
   const flightAngleRef = useRef(0);
 
   useEffect(() => {
-    if (isSimulating || !isManualConnect) { if (websocket) { websocket.onclose = null; websocket.close(); setWebsocket(null); } return; }
-    const connectWebSocket = () => {
-      const ws = new WebSocket('ws://localhost:8765');
-      ws.onopen = () => { setConnectionStatus('Connected'); setWebsocket(ws); };
-      ws.onmessage = (event) => { try { const data = JSON.parse(event.data); if (data.type === 'telemetry') setTelemetry(data); } catch (err) { console.error('Error parsing data:', err); } };
-      ws.onclose = () => { setConnectionStatus('Disconnected'); setWebsocket(null); if (isManualConnect) setTimeout(connectWebSocket, 3000); };
-      ws.onerror = () => setConnectionStatus('Error');
+    if (isSimulating) {
+      // Start with 15 second delay
+      setSimulationDelay(5);
+      
+      // Start delay countdown
+      delayTimerRef.current = setInterval(() => {
+        setSimulationDelay(prev => {
+          if (prev === null || prev <= 1) {
+            clearInterval(delayTimerRef.current!);
+            // Start the actual simulation here
+            setTelemetry(t => ({ ...t, armed: true, mode: 'GUIDED' })); flightAngleRef.current = 0;
+            simulationIntervalRef.current = setInterval(() => {
+                setTelemetry(prev => {
+                    const centerLat = 28.3639, centerLon = 75.5880, radius = 0.001;
+                    flightAngleRef.current += 0.05;
+                    const newLat = centerLat + radius * Math.sin(flightAngleRef.current);
+                    const newLon = centerLon + radius * Math.cos(flightAngleRef.current);
+                    const time = Date.now() / 1000;
+                    return {
+                      ...prev,
+                      lat: newLat,
+                      lon: newLon,
+                      relative_alt: 25 + Math.sin(time / 2) * 10,
+                      ground_speed: 5 + Math.random() * 10,
+                      yaw: calculateBearing(prev.lat || centerLat, prev.lon || centerLon, newLat, newLon),
+                      armed: true,
+                      mode: 'GUIDED',
+                      vertical_speed: Math.cos(time / 2) * 5,
+                      roll: Math.sin(time) * 15,
+                      pitch: Math.cos(time) * 10,
+                    };
+                });
+            }, 500);
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      if (simulationIntervalRef.current) clearInterval(simulationIntervalRef.current);
+      if (delayTimerRef.current) clearInterval(delayTimerRef.current);
+      setSimulationDelay(null);
+      setTelemetry(initialTelemetry);
+    }
+
+    return () => {
+      if (simulationIntervalRef.current) clearInterval(simulationIntervalRef.current);
+      if (delayTimerRef.current) clearInterval(delayTimerRef.current);
     };
-    connectWebSocket(); return () => { if (websocket) websocket.close(); };
-  }, [isManualConnect, isSimulating]);
+  }, [isSimulating]); // Only depend on isSimulating
+
+  // Modify the panel telemetry to show zeros during delay
+  const panelTelemetry: PanelTelemetryData = simulationDelay ? {
+    altitude: 0,
+    groundSpeed: 0,
+    yaw: 0,
+    verticalSpeed: 0,
+    distToWP: 0,
+    distToMAV: 0,
+  } : {
+    altitude: telemetry.relative_alt,
+    groundSpeed: telemetry.ground_speed,
+    yaw: telemetry.yaw,
+    verticalSpeed: telemetry.vertical_speed,
+    distToWP: 0,
+    distToMAV: 0,
+  };
+
+  const connectWebSocket = () => {
+    const ws = new WebSocket('ws://localhost:8765');
+    ws.onopen = () => { setConnectionStatus('Connected'); setWebsocket(ws); };
+    ws.onmessage = (event) => { try { const data = JSON.parse(event.data); if (data.type === 'telemetry') setTelemetry(data); } catch (err) { console.error('Error parsing data:', err); } };
+    ws.onclose = () => { setConnectionStatus('Disconnected'); setWebsocket(null); if (isManualConnect) setTimeout(connectWebSocket, 3000); };
+    ws.onerror = () => setConnectionStatus('Error');
+  };
 
   useEffect(() => {
-    if (isSimulating) {
-        setTelemetry(prev => ({ ...prev, armed: true, mode: 'GUIDED' })); flightAngleRef.current = 0;
-        simulationIntervalRef.current = setInterval(() => {
-            setTelemetry(prev => {
-                const centerLat = 28.3639, centerLon = 75.5880, radius = 0.001; flightAngleRef.current += 0.05;
-                const newLat = centerLat + radius * Math.sin(flightAngleRef.current); const newLon = centerLon + radius * Math.cos(flightAngleRef.current);
-                const time = Date.now() / 1000;
-                return { ...prev, lat: newLat, lon: newLon, relative_alt: 25 + Math.sin(time / 2) * 10, ground_speed: 5.2, yaw: calculateBearing(prev.lat || centerLat, prev.lon || centerLon, newLat, newLon), armed: true, mode: 'GUIDED', vertical_speed: Math.cos(time / 2) * 5, roll: Math.sin(time) * 15, pitch: Math.cos(time) * 10, };
-            });
-        }, 500);
-    } else { if (simulationIntervalRef.current) clearInterval(simulationIntervalRef.current); setTelemetry(initialTelemetry); }
-    return () => { if (simulationIntervalRef.current) clearInterval(simulationIntervalRef.current); };
-  }, [isSimulating]);
+    if (isManualConnect) {
+      connectWebSocket();
+    }
+    return () => {
+      if (websocket) websocket.close();
+    };
+  }, [isManualConnect]);
 
-  // const sendCommand = (command: string, params?: any) => { if (websocket?.readyState === WebSocket.OPEN) { websocket.send(JSON.stringify({ command, params: params || {}, timestamp: Date.now() })); } else { alert('Not connected to flight controller!'); } };
   const handleTakeoff = (params: TakeoffParams) => isSimulating ? console.log(`SIM: Takeoff to ${params.altitude}m`) : sendCommand('takeoff', { altitude: params.altitude });
   const handleArmDisarm = () => isSimulating ? setTelemetry(t => ({...t, armed: !t.armed})) : sendCommand(telemetry.armed ? 'disarm' : 'arm');
   const handleLand = () => isSimulating ? setIsSimulating(false) : sendCommand('land');
@@ -337,8 +398,6 @@ function App() {
   const handleConnectionToggle = () => { if(isSimulating) setIsSimulating(false); setIsManualConnect(prev => !prev); };
   const handleSimulationToggle = () => { const nowSimulating = !isSimulating; setIsSimulating(nowSimulating); if (nowSimulating) setIsManualConnect(false); };
   const currentStatus = isSimulating ? 'Simulating' : connectionStatus;
-  const panelTelemetry: PanelTelemetryData = { altitude: telemetry.relative_alt, groundSpeed: telemetry.ground_speed, yaw: telemetry.yaw, verticalSpeed: telemetry.vertical_speed, distToWP: 0, distToMAV: 0, };
-
   return (
     <div className="app">
         <style>{AppStyles}</style>
@@ -347,14 +406,12 @@ function App() {
             {/* --- UPDATED: New layout for right-side UI --- */}
             <div className="right-ui-container">
                 <div className="top-buttons-container">
-                    <button onClick={handleConnectionToggle} className={`connect-button ${currentStatus.toLowerCase()}`} disabled={isSimulating}>
-                        {currentStatus === 'Connected' ? 'DISCONNECT' : 'CONNECT'}
-                    </button>
+                    
                     <button onClick={handleSimulationToggle} className={`simulation-button ${isSimulating ? 'simulating' : ''}`}>
-                        {isSimulating ? 'STOP SIM' : 'RUN SIM'}
+                        {isSimulating ? (simulationDelay ? `Disconnect` : 'Disconnect') : 'Connect'}
                     </button>
                 </div>
-                <AttitudePanel telemetry={telemetry} />
+                <AttitudePanel telemetry={simulationDelay ? { ...telemetry, roll: 0, pitch: 0, yaw: 0 } : telemetry} />
             </div>
             <TelemetryPanel telemetry={panelTelemetry} />
         </div>
